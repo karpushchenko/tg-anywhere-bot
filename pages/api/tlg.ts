@@ -1,5 +1,6 @@
 import { request, get } from 'https';
 import Model from '../includes/model';
+import axios from 'axios';
 
 const processMessage = async (req, res) => {
     const tgbot = process.env.NEXT_TELEGRAM_TOKEN;
@@ -7,7 +8,7 @@ const processMessage = async (req, res) => {
       res.status(400).send('Failed');
     }
     const message = req.body.message || req.body.edited_message;
-    if (message.text === '/start') {
+    if (message.text && message.text === '/start') {
       const messageText =
         'Welcome to <i>Telegram Anywhere</i> integration bot<b>, ' +
         message.from.first_name +
@@ -33,20 +34,28 @@ const processMessage = async (req, res) => {
         `https://api.telegram.org/bot${tgbot}/setChatMenuButton?chat_id=${message.chat.id}&menu_button=${JSON.stringify(buttonObj)}`
       );
     }
-    else if (message.text === '/help') {
+    else if (message.text && message.text === '/help') {
       const messageText =
         'Help for <i>Telegram Anywhere</i>.%0AUse /start <i>keyword</i> to initialize the bot with the latest data';
       const ret = await fetch(
         `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`
       );
     }
-    else if (message.hasOwnProperty('text')) {
+    else if (message.text) {
       const model = new Model;
       const user = await model.getUser(message.from.id);
-      const messageText = JSON.stringify(user);
-      const ret = await fetch(
-        `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`
-      );
+      if(user.webhook){
+        axios.post(user.webhook, {
+          text: message.text,
+        }).then(
+          async () => {
+            const messageText = `Successfully submitted to ${user.webhook}`;
+            const ret = await fetch(
+              `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`
+            );
+          }
+        )
+      }
     }
     res.status(200).send('OK');
   };
