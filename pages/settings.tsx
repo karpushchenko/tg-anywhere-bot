@@ -4,8 +4,15 @@ import Script from 'next/script';
 import { useState } from 'react';
 import axios from 'axios';
 
+const Placeholder = ({children} : { children: string}) => {
+  return (<b onClick={() => {navigator.clipboard.writeText(children)}}>
+    { children }
+  </b>);
+}
+
 export default function Settings() {
   const [webhook, setWebhook] = useState('');
+  const [schema, setSchema] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [userId, setUserId] = useState(undefined);
   const getWebhook = async (userId) => {
@@ -15,8 +22,13 @@ export default function Settings() {
     axios.get(`/api/user?id=${userId}`)
       .then(function (user) {
         // handle success
-        if (user.data && user.data.webhook) {
-          setWebhook(user.data.webhook);
+        if (user.data) {
+          if(user.data.webhook){
+            setWebhook(user.data.webhook);
+          }
+          if(user.data.schema){
+            setSchema(user.data.schema);
+          }
         }
         setLoaded(true);
       })
@@ -28,6 +40,7 @@ export default function Settings() {
       id : userId,
       data: {
         webhook: webhook,
+        schema: schema,
       }
     });
   }
@@ -43,6 +56,7 @@ export default function Settings() {
         src="https://telegram.org/js/telegram-web-app.js"
         onLoad={() => {
           console.log(`script loaded correctly, window.Telegram has been populated`);
+          if(!window.Telegram.WebApp) return;
           const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
           setUserId(userId);
           getWebhook(userId);
@@ -67,7 +81,7 @@ export default function Settings() {
                         <div className="grid grid-cols-6 gap-6">
                           <div className="col-span-6 sm:col-span-3">
                             <label htmlFor="webhook" className="block text-sm font-medium text-gray-700">
-                              Webhook url {webhook}
+                              Webhook url
                             </label>
                             <input
                               type="url"
@@ -76,6 +90,28 @@ export default function Settings() {
                               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                               value={webhook}
                               onChange={e => setWebhook(e.target.value)}
+                            />
+                          </div>
+                          <div className="col-span-6 sm:col-span-3">
+                            <label htmlFor="schema" className="block text-sm font-medium text-gray-700">
+                              JSON body for your submission
+                            </label>
+                            <small>
+                              Use the following placeholders to add dynamic values to your submission:
+                              <div className='flex flex-col'>
+                              <Placeholder>$firstName</Placeholder>
+                              <Placeholder>$lastName</Placeholder>
+                              <Placeholder>$MessageText</Placeholder>
+                              <Placeholder>$MessageDate</Placeholder>
+                              </div>
+                            </small>
+                            <textarea
+                              name="schema"
+                              id="schema"
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                              value={schema}
+                              rows={10}
+                              onChange={e => setSchema(e.target.value)}
                             />
                           </div>
                         </div>

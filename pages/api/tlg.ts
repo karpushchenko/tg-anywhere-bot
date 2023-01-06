@@ -1,6 +1,15 @@
 import { request, get } from 'https';
 import Model from '../includes/model';
 import axios from 'axios';
+const querystring = require('node:querystring');
+
+const prepareSchema = (schema:string, message) => {
+  schema = schema.replaceAll('$firstName', message.from.first_name);
+  schema = schema.replaceAll('$lastName', message.from.last_name);
+  schema = schema.replaceAll('$MessageText', message.text);
+  schema = schema.replaceAll('$MessageDate', querystring.escape(message.date));
+  return JSON.parse(schema);
+}
 
 const processMessage = async (req, res) => {
     const tgbot = process.env.NEXT_TELEGRAM_TOKEN;
@@ -44,10 +53,9 @@ const processMessage = async (req, res) => {
     else if (message.text) {
       const model = new Model;
       const user = await model.getUser(message.from.id);
-      if(user.webhook){
-        axios.post(user.webhook, {
-          text: message.text,
-        }).then(
+      if(user.webhook && user.schema){
+        const data = prepareSchema(user.schema, message);
+        axios.post(user.webhook, data).then(
           async () => {
             const messageText = `Successfully submitted to ${user.webhook}`;
             const ret = await fetch(
