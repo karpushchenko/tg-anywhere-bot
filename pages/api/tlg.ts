@@ -1,9 +1,10 @@
 import { request, get } from 'https';
 import Model from '../includes/model';
 import axios from 'axios';
-const querystring = require('node:querystring');
+import querystring from 'node:querystring';
+import { Message } from "typegram";
 
-const prepareSchema = (schema:string, message) => {
+const prepareSchema = (schema:string, message:Message) => {
   schema = schema.replaceAll('$firstName', message.from.first_name);
   schema = schema.replaceAll('$lastName', message.from.last_name);
   schema = schema.replaceAll('$MessageText', querystring.escape(message.text));
