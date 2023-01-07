@@ -6,8 +6,8 @@ const querystring = require('node:querystring');
 const prepareSchema = (schema:string, message) => {
   schema = schema.replaceAll('$firstName', message.from.first_name);
   schema = schema.replaceAll('$lastName', message.from.last_name);
-  schema = schema.replaceAll('$MessageText', message.text);
-  schema = schema.replaceAll('$MessageDate', querystring.escape(message.date));
+  schema = schema.replaceAll('$MessageText', querystring.escape(message.text));
+  schema = schema.replaceAll('$MessageDate', message.date);
   return JSON.parse(schema);
 }
 
