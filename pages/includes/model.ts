@@ -1,11 +1,5 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
-import { request, get } from "https";
-
-interface User {
-  id?: number;
-  name?: string;
-  webhook?: string;
-}
+const { MongoClient } = require('mongodb');
+import { User } from './types'
 
 class Model {
   private uri = process.env.MONGODB_URI;
@@ -16,7 +10,7 @@ class Model {
   constructor() {
     this.client = new MongoClient(this.uri);
     this.database = this.client.db(this.db_name);
-    this.users = this.database.collection<User>("users");
+    this.users = this.database.collection("users");
   }
 
   public saveUser = (id: number, data: User) => {
@@ -41,20 +35,23 @@ class Model {
     run(this).catch(console.dir).then(() => true);
   }
 
-  public getUser = async (id) => {
-    async function run(instance): Promise<void> {
+  public getUser = async (id:number):Promise<false | User> => {
+    async function run(instance: Model): Promise<false | User> {
       try {
-        const user = await instance.users.findOne<User>(
-          { id: parseInt(id) },
+        const user = await instance.users.findOne(
+          { id: id },
         );
         if (user) {
           return user;
+        } else {
+          return false;
         }
       } finally {
         await instance.client.close();
       }
     }
-    return run(this).catch(console.dir).then(user => user);
+    const user: false | User =  await run(this).catch(() => {return false}).then(user => user)
+    return user;
   }
 }
 

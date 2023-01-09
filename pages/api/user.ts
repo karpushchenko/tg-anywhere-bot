@@ -1,6 +1,7 @@
 import Model from '../includes/model'
+import { NextApiResponse, NextApiRequest } from "next";
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const model = new Model;
     if (req.method === 'POST') {
         if(req.body.id && req.body.data){
@@ -9,7 +10,8 @@ export default async function handler(req, res) {
         }
     } else if (req.method === 'GET') {
         if(req.query.id){
-            const user = await model.getUser(req.query.id);
+            const userId = Array.isArray(req.query.id) ? req.query.id[0] : req.query.id
+            const user = await model.getUser(parseInt(userId));
             res.status(200).send(user);
         }
     }

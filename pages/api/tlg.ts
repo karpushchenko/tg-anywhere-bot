@@ -1,18 +1,23 @@
-import { request, get } from 'https';
 import Model from '../includes/model';
 import axios from 'axios';
 import querystring from 'node:querystring';
-import { Message } from "typegram";
+import { Message, Update } from 'typegram';
+import { NextApiResponse, NextApiRequest } from 'next';
+import { User } from '../includes/types';
 
-const prepareSchema = (schema:string, message:Message) => {
-  schema = schema.replaceAll('$firstName', message.from.first_name);
-  schema = schema.replaceAll('$lastName', message.from.last_name);
-  schema = schema.replaceAll('$MessageText', querystring.escape(message.text));
-  schema = schema.replaceAll('$MessageDate', message.date);
+const prepareSchema = (schema:string, message:Message.TextMessage) => {
+  if(message.from){
+    schema = schema.replaceAll('$firstName', message.from.first_name);
+    schema = schema.replaceAll('$lastName', message.from.last_name || '');
+  }
+  const text = message.text? message.text : '';
+  schema = schema.replaceAll('$MessageText', querystring.escape(text));
+  const date = message.date? message.date.toString() : '';
+  schema = schema.replaceAll('$MessageDate', date);
   return JSON.parse(schema);
 }
 
-const processMessage = async (req, res) => {
+const processMessage = async (req: NextApiRequest, res: NextApiResponse) => {
     const tgbot = process.env.NEXT_TELEGRAM_TOKEN;
     if(!req.body.message && !req.body.edited_message) {
       res.status(400).send('Failed');
@@ -53,8 +58,8 @@ const processMessage = async (req, res) => {
     }
     else if (message.text) {
       const model = new Model;
-      const user = await model.getUser(message.from.id);
-      if(user.webhook && user.schema){
+      const user: false | User = await model.getUser(message.from.id);
+      if(user && user.webhook && user.schema){
         const data = prepareSchema(user.schema, message);
         axios.post(user.webhook, data).then(
           async () => {
