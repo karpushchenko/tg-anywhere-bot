@@ -34,9 +34,7 @@ const processMessage = async (req: NextApiRequest, res: NextApiResponse) => {
       name: `${message.from.first_name} ${message.from.last_name}`,
     };
     model.saveUser(message.from.id, data);
-    const ret = await fetch(
-      `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`
-    );
+    axios.get(`https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`)
 
     const buttonObj = {
       type: 'web_app',
@@ -45,16 +43,12 @@ const processMessage = async (req: NextApiRequest, res: NextApiResponse) => {
         url: `https://${req.headers.host}/settings`,
       }
     }
-    const buttonRet = await fetch(
-      `https://api.telegram.org/bot${tgbot}/setChatMenuButton?chat_id=${message.chat.id}&menu_button=${JSON.stringify(buttonObj)}`
-    );
+    axios.get(`https://api.telegram.org/bot${tgbot}/setChatMenuButton?chat_id=${message.chat.id}&menu_button=${JSON.stringify(buttonObj)}`)
   }
   else if (message.text && message.text === '/help') {
     const messageText =
       'Help for <i>Telegram Anywhere</i>.%0AUse /start <i>keyword</i> to initialize the bot with the latest data';
-    const ret = await fetch(
-      `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`
-    );
+    axios.get(`https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`);
   }
   else if (message.text) {
     const model = new Model;
@@ -65,18 +59,14 @@ const processMessage = async (req: NextApiRequest, res: NextApiResponse) => {
         .catch(
           async (error) => {
             const messageText = `Error: ${error.message}`;
-            const ret = await fetch(
-              `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`
-            );
+            axios.get(`https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`);
             throw error;
           }
         )
         .then(
           async () => {
             const messageText = `Successfully submitted to ${user.webhook}`;
-            const ret = await fetch(
-              `https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`
-            );
+            axios.get(`https://api.telegram.org/bot${tgbot}/sendMessage?chat_id=${message.chat.id}&text=${messageText}&parse_mode=HTML`)
           }
         )
     }
